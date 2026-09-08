@@ -234,6 +234,17 @@
     text-overflow: ellipsis;
   }
 
+  #mp-app-root .mp-track-price {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--mp-accent);
+    border: 1px solid var(--mp-accent-dim);
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
   #mp-app-root .mp-track-buy {
     flex-shrink: 0;
     font-size: 12px;
@@ -338,28 +349,32 @@
     #mp-app-root .mp-hero-cover { width: 84px; height: 84px; }
   }
 
-  /* Botón flotante de WhatsApp */
+  /* Botón flotante de WhatsApp — reubicado arriba a la derecha
+     para que nunca tape la barra del reproductor (que va abajo) */
   #mp-wa-button {
     position: fixed;
-    right: 20px;
-    bottom: 24px;
+    right: 16px;
+    top: 16px;
     z-index: 999999;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: #25D366;
     color: #ffffff;
     text-decoration: none;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     font-weight: 700;
-    font-size: 14px;
-    padding: 12px 18px 12px 14px;
+    font-size: 13px;
+    padding: 10px 16px 10px 12px;
     border-radius: 999px;
     box-shadow: 0 8px 22px rgba(0,0,0,0.35);
     animation: mp-wa-pulse 2.2s ease-in-out infinite;
+    max-width: calc(100vw - 32px);
   }
   #mp-wa-button:hover { filter: brightness(1.05); }
-  #mp-wa-button .mp-wa-icon { display: flex; }
+  #mp-wa-button .mp-wa-icon { display: flex; flex-shrink: 0; }
+  #mp-wa-button .mp-wa-icon svg { width: 20px; height: 20px; }
+  #mp-wa-button .mp-wa-text { white-space: nowrap; }
 
   @keyframes mp-wa-pulse {
     0%   { box-shadow: 0 8px 22px rgba(0,0,0,0.35), 0 0 0 0 rgba(37,211,102,0.55); }
@@ -367,9 +382,16 @@
     100% { box-shadow: 0 8px 22px rgba(0,0,0,0.35), 0 0 0 0 rgba(37,211,102,0); }
   }
 
+  /* En móvil se achica el botón pero el texto "Pídelo aquí" se conserva visible */
   @media (max-width: 420px) {
-    #mp-wa-button .mp-wa-text { display: none; }
-    #mp-wa-button { padding: 14px; }
+    #mp-wa-button {
+      font-size: 11.5px;
+      padding: 8px 12px 8px 10px;
+      gap: 5px;
+      right: 10px;
+      top: 10px;
+    }
+    #mp-wa-button .mp-wa-icon svg { width: 17px; height: 17px; }
   }
 </style>
 
@@ -386,11 +408,13 @@
     playlistDescription: "Escucha el álbum completo.",
     coverImage: "https://github.com/conectadosturadio/ALBUM-DAMA-/blob/main/PORTADA%20ALBUM.png?raw=true",
     accentColor: "#E8A33D",
-    whatsappNumber: "50765489138" // número con código de país, sin + ni espacios
+    whatsappNumber: "50765489138", // número con código de país, sin + ni espacios
+    trackDurationLimit: 90, // límite de reproducción por canción, en segundos (90 = 1:30). Pon null para quitar el límite.
+    trackPrice: "$0.99" // precio que se muestra en cada canción
   };
 
   /* =========================================================================
-     TRACKS — tus canciones (se reproducen completas, no en vista previa)
+     TRACKS — tus canciones (se reproducen hasta el límite de arriba)
   ========================================================================= */
   const TRACKS = [
     {
@@ -457,6 +481,7 @@
   let currentIndex = -1;
   let isPlaying = false;
   let playMode = "sequential"; // "sequential" | "shuffle"
+  let advancing = false; // evita que el corte de duración dispare el avance dos veces
   const audioEl = new Audio();
 
   function fmtTime(s) {
@@ -464,6 +489,15 @@
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60).toString().padStart(2, "0");
     return `${m}:${sec}`;
+  }
+
+  // Duración "visible" de una pista: el límite configurado, o la duración
+  // real si la canción dura menos que el límite (o si no hay límite).
+  function effectiveDuration() {
+    const real = audioEl.duration;
+    if (!isFinite(real)) return CONFIG.trackDurationLimit || 0;
+    if (!CONFIG.trackDurationLimit) return real;
+    return Math.min(real, CONFIG.trackDurationLimit);
   }
 
   function visibleTracks() {
@@ -518,7 +552,7 @@
               <div class="mp-track-title">${t.title}</div>
               <div class="mp-track-artist">${t.artist}</div>
             </div>
-            ${t.buyUrl ? `<a class="mp-track-buy" href="${t.buyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Comprar</a>` : ""}
+            ${t.buyUrl ? `<a class="mp-track-buy" href="${t.buyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Comprar</a>` : `<span class="mp-track-price">${CONFIG.trackPrice}</span>`}
           </div>
         `).join("")}
       </div>
@@ -589,16 +623,19 @@
     const progressTrack = root.querySelector("#mp-progress-track");
     if (progressTrack) {
       progressTrack.addEventListener("click", (e) => {
-        if (currentIndex < 0 || !isFinite(audioEl.duration)) return;
+        if (currentIndex < 0) return;
+        const dur = effectiveDuration();
+        if (!isFinite(dur) || dur <= 0) return;
         const rect = progressTrack.getBoundingClientRect();
         const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-        audioEl.currentTime = ratio * audioEl.duration;
+        audioEl.currentTime = ratio * dur;
       });
     }
   }
 
   function loadTrack(i) {
     currentIndex = i;
+    advancing = false;
     const track = TRACKS[i];
     audioEl.src = track.audio || "";
     audioEl.currentTime = 0;
@@ -641,18 +678,31 @@
   }
 
   audioEl.addEventListener("timeupdate", () => {
-    if (currentIndex < 0 || !isFinite(audioEl.duration)) return;
+    if (currentIndex < 0) return;
+
+    // Corte de duración: si hay un límite configurado y ya se alcanzó,
+    // pasa a la siguiente canción como si hubiera terminado.
+    if (CONFIG.trackDurationLimit && audioEl.currentTime >= CONFIG.trackDurationLimit && !advancing) {
+      advancing = true;
+      playNextAuto();
+      return;
+    }
+
+    const dur = effectiveDuration();
     const fill = document.getElementById("mp-progress-fill");
     const curEl = document.getElementById("mp-time-current");
     const totEl = document.getElementById("mp-time-total");
-    if (fill) fill.style.width = `${(audioEl.currentTime / audioEl.duration) * 100}%`;
+    if (fill && dur > 0) fill.style.width = `${Math.min((audioEl.currentTime / dur) * 100, 100)}%`;
     if (curEl) curEl.textContent = fmtTime(audioEl.currentTime);
-    if (totEl) totEl.textContent = fmtTime(audioEl.duration);
+    if (totEl) totEl.textContent = fmtTime(dur);
   });
 
-  // Al terminar una canción, pasa automáticamente a la siguiente — para
-  // siempre, en bucle infinito (consecutivo o aleatorio según el modo).
-  audioEl.addEventListener("ended", playNextAuto);
+  // Si la canción termina antes de llegar al límite (o no hay límite),
+  // pasa automáticamente a la siguiente — para siempre, en bucle infinito.
+  audioEl.addEventListener("ended", () => {
+    if (advancing) return; // ya se manejó por el corte de duración
+    playNextAuto();
+  });
 
   render();
 })();
