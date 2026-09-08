@@ -1,29 +1,27 @@
 <!--
   ===========================================================================
-  REPRODUCTOR DE MÚSICA CON VISTA PREVIA — para pegar en Blogger
+  REPRODUCTOR DE MÚSICA — para pegar en Blogger
   ===========================================================================
   CÓMO USARLO:
-  1. Baja hasta la sección "CONFIG" (unas líneas más abajo) y cambia:
-     - logoUrl / brandName: tu logo o nombre.
-     - playlistName / playlistDescription: el título y descripción grandes.
-     - coverImage: la imagen grande de fondo (como la de Amazon Music).
-  2. Baja hasta "TRACKS" y reemplaza cada canción con las tuyas:
-     - title, artist, album: texto.
-     - cover: URL de la imagen cuadrada de esa canción.
-     - audio: URL directa del archivo MP3 (puede ser el trozo/preview,
-       o la canción completa — el reproductor la corta igual).
-     - previewSeconds: cuántos segundos se dejan escuchar antes de parar
-       automáticamente (ej: 30). Si no lo pones, usa el valor general.
-     - buyUrl: (opcional) link de compra/descarga. Si lo dejas vacío,
-       no aparece botón de compra en esa canción.
-  3. Copia TODO este archivo y pégalo en Blogger: al editar una entrada,
-     cambia la vista a "HTML" y pega aquí.
-  4. Sube tus archivos MP3 e imágenes a algún lugar con enlace público
-     (Google Drive, Dropbox, tu propio hosting, etc.) y usa esos enlaces
-     directos en "audio" y "cover".
+  1. Baja hasta "CONFIG" y cambia logo, título, descripción, portada y
+     el número de WhatsApp para el botón "Pídelo aquí".
+  2. Baja hasta "TRACKS" y ya están cargadas tus 6 canciones con los links
+     de GitHub. Solo cambia "artist" por tu nombre o el de tu proyecto.
+  3. Copia TODO este archivo y pégalo en Blogger, en una entrada, en modo
+     HTML (los tres puntos del editor → HTML view).
   ===========================================================================
 -->
 <div id="mp-app-root"></div>
+
+<a id="mp-wa-button" href="https://wa.me/50765489138" target="_blank" rel="noopener">
+  <span class="mp-wa-icon">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+      <path d="M12.004 2C6.486 2 2.01 6.477 2.01 12c0 1.86.507 3.632 1.464 5.19L2 22l4.94-1.446A9.958 9.958 0 0 0 12.004 22C17.522 22 22 17.523 22 12S17.522 2 12.004 2zm0 18.156a8.13 8.13 0 0 1-4.147-1.14l-.298-.176-3.024.885.9-2.95-.194-.303a8.104 8.104 0 0 1-1.246-4.32c0-4.49 3.653-8.142 8.147-8.142 4.494 0 8.147 3.652 8.147 8.142 0 4.49-3.653 8.148-8.147 8.148z"/>
+    </svg>
+  </span>
+  <span class="mp-wa-text">Pídelo aquí</span>
+</a>
 
 <style>
   #mp-app-root, #mp-app-root * { box-sizing: border-box; }
@@ -120,10 +118,11 @@
   #mp-app-root .mp-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     margin-top: 18px;
     position: relative;
     z-index: 1;
+    flex-wrap: wrap;
   }
   #mp-app-root .mp-play-all {
     background: var(--mp-accent);
@@ -139,6 +138,31 @@
     gap: 8px;
   }
   #mp-app-root .mp-play-all:hover { filter: brightness(1.06); }
+
+  #mp-app-root .mp-mode-toggle {
+    display: flex;
+    background: rgba(255,255,255,0.06);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+  }
+  #mp-app-root .mp-mode-btn {
+    border: none;
+    background: transparent;
+    color: var(--mp-text-soft);
+    font-size: 12.5px;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #mp-app-root .mp-mode-btn.active {
+    background: var(--mp-text);
+    color: var(--mp-bg);
+  }
 
   #mp-app-root .mp-albums {
     display: flex;
@@ -223,21 +247,6 @@
   }
   #mp-app-root .mp-track-buy:hover { background: rgba(232,163,61,0.12); }
 
-  #mp-app-root .mp-icon-btn {
-    background: transparent;
-    border: none;
-    color: var(--mp-text-soft);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  #mp-app-root .mp-icon-btn:hover { color: var(--mp-text); background: rgba(255,255,255,0.06); }
-
   /* Mini player fijo abajo */
   #mp-app-root .mp-bar {
     position: sticky;
@@ -259,7 +268,7 @@
     flex-shrink: 0;
     background: linear-gradient(135deg, var(--mp-accent-dim), var(--mp-surface));
   }
-  #mp-app-root .mp-bar-info { min-width: 0; width: 120px; flex-shrink: 0; }
+  #mp-app-root .mp-bar-info { min-width: 0; width: 110px; flex-shrink: 0; }
   #mp-app-root .mp-bar-title {
     font-size: 13px;
     font-weight: 600;
@@ -322,21 +331,45 @@
     border-radius: 999px;
     width: 0%;
   }
-  #mp-app-root .mp-preview-tag {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--mp-accent);
-    border: 1px solid var(--mp-accent-dim);
-    padding: 2px 7px;
-    border-radius: 999px;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
 
   @media (max-width: 420px) {
     #mp-app-root .mp-bar-info { width: 70px; }
     #mp-app-root .mp-title { font-size: 24px; }
     #mp-app-root .mp-hero-cover { width: 84px; height: 84px; }
+  }
+
+  /* Botón flotante de WhatsApp */
+  #mp-wa-button {
+    position: fixed;
+    right: 20px;
+    bottom: 24px;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #25D366;
+    color: #ffffff;
+    text-decoration: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px 18px 12px 14px;
+    border-radius: 999px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+    animation: mp-wa-pulse 2.2s ease-in-out infinite;
+  }
+  #mp-wa-button:hover { filter: brightness(1.05); }
+  #mp-wa-button .mp-wa-icon { display: flex; }
+
+  @keyframes mp-wa-pulse {
+    0%   { box-shadow: 0 8px 22px rgba(0,0,0,0.35), 0 0 0 0 rgba(37,211,102,0.55); }
+    70%  { box-shadow: 0 8px 22px rgba(0,0,0,0.35), 0 0 0 14px rgba(37,211,102,0); }
+    100% { box-shadow: 0 8px 22px rgba(0,0,0,0.35), 0 0 0 0 rgba(37,211,102,0); }
+  }
+
+  @media (max-width: 420px) {
+    #mp-wa-button .mp-wa-text { display: none; }
+    #mp-wa-button { padding: 14px; }
   }
 </style>
 
@@ -347,22 +380,18 @@
      CONFIG — edita esto con tus datos
   ========================================================================= */
   const CONFIG = {
-    logoUrl: "",                      // URL de tu logo pequeño (opcional)
-    brandName: "Mi Música",           // nombre que aparece junto al logo
-    playlistName: "Mis Canciones",    // título grande
-    playlistDescription: "Escucha la vista previa y descubre mis temas.",
+    logoUrl: "",
+    brandName: "Conectados Tu Radio",
+    playlistName: "Álbum Dama",
+    playlistDescription: "Escucha el álbum completo.",
     coverImage: "https://github.com/conectadosturadio/ALBUM-DAMA-/blob/main/PORTADA%20ALBUM.png?raw=true",
-    accentColor: "#E8A33D",           // color de acento (botones, progreso)
-    defaultPreviewSeconds: 60         // duración de la vista previa por defecto
+    accentColor: "#E8A33D",
+    whatsappNumber: "50765489138" // número con código de país, sin + ni espacios
   };
 
   /* =========================================================================
-     TRACKS — reemplaza con tus canciones
-     Cada canción admite:
-       title, artist, album, cover, audio, previewSeconds (opcional), buyUrl (opcional)
+     TRACKS — tus canciones (se reproducen completas, no en vista previa)
   ========================================================================= */
-  // Deja "cover" vacío en cada canción: como usarás UNA sola imagen para
-  // todo, el reproductor toma automáticamente la de CONFIG.coverImage.
   const TRACKS = [
     {
       title: "Amigos De Verdad",
@@ -370,7 +399,6 @@
       album: "Álbum",
       cover: "",
       audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/AMIGOS%20DE%20VERDAD.mp3",
-      previewSeconds: 60,
       buyUrl: ""
     },
     {
@@ -379,7 +407,6 @@
       album: "Álbum",
       cover: "",
       audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/BARRANQUILLA%20QUE%20SABOR.mp3",
-      previewSeconds: 60,
       buyUrl: ""
     },
     {
@@ -388,7 +415,6 @@
       album: "Álbum",
       cover: "",
       audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/GUACHARACA%20LLAMAME.mp3",
-      previewSeconds: 60,
       buyUrl: ""
     },
     {
@@ -397,7 +423,6 @@
       album: "Álbum",
       cover: "",
       audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/OH%20SUFRIR.mp3",
-      previewSeconds: 60,
       buyUrl: ""
     },
     {
@@ -406,7 +431,6 @@
       album: "Álbum",
       cover: "",
       audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/QUE%20BONITO%20ES%20REGRESAR.mp3",
-      previewSeconds: 60,
       buyUrl: ""
     },
     {
@@ -415,21 +439,24 @@
       album: "Álbum",
       cover: "",
       audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/QUIERO%20VOLVER.mp3",
-      previewSeconds: 60,
       buyUrl: ""
     }
   ];
 
   /* =========================================================================
-     A partir de aquí es el motor del reproductor — no hace falta tocarlo.
+     Motor del reproductor — no hace falta tocarlo.
   ========================================================================= */
   const root = document.getElementById("mp-app-root");
   root.style.setProperty("--mp-accent", CONFIG.accentColor);
+
+  const waBtn = document.getElementById("mp-wa-button");
+  if (waBtn) waBtn.href = "https://wa.me/" + CONFIG.whatsappNumber;
 
   const albums = ["Todos", ...Array.from(new Set(TRACKS.map(t => t.album).filter(Boolean)))];
   let activeAlbum = "Todos";
   let currentIndex = -1;
   let isPlaying = false;
+  let playMode = "sequential"; // "sequential" | "shuffle"
   const audioEl = new Audio();
 
   function fmtTime(s) {
@@ -469,6 +496,10 @@
           </div>
           <div class="mp-actions">
             <button class="mp-play-all" id="mp-play-all">▶ Reproducir</button>
+            <div class="mp-mode-toggle">
+              <button class="mp-mode-btn ${playMode === 'sequential' ? 'active' : ''}" data-mode="sequential">Consecutivo</button>
+              <button class="mp-mode-btn ${playMode === 'shuffle' ? 'active' : ''}" data-mode="shuffle">🔀 Aleatorio</button>
+            </div>
           </div>
         </div>
       </div>
@@ -506,7 +537,6 @@
           </div>
           <span class="mp-progress-time" id="mp-time-total">0:00</span>
         </div>
-        <span class="mp-preview-tag">Vista previa</span>
       </div>
     `;
 
@@ -517,6 +547,13 @@
     root.querySelectorAll(".mp-album-chip").forEach(btn => {
       btn.addEventListener("click", () => {
         activeAlbum = btn.dataset.album;
+        render();
+      });
+    });
+
+    root.querySelectorAll(".mp-mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        playMode = btn.dataset.mode;
         render();
       });
     });
@@ -538,7 +575,10 @@
       playAllBtn.addEventListener("click", () => {
         const tracks = visibleTracks();
         if (!tracks.length) return;
-        loadTrack(tracks[0]._i);
+        const startTrack = playMode === "shuffle"
+          ? tracks[Math.floor(Math.random() * tracks.length)]
+          : tracks[0];
+        loadTrack(startTrack._i);
         play();
       });
     }
@@ -549,12 +589,10 @@
     const progressTrack = root.querySelector("#mp-progress-track");
     if (progressTrack) {
       progressTrack.addEventListener("click", (e) => {
-        if (currentIndex < 0) return;
+        if (currentIndex < 0 || !isFinite(audioEl.duration)) return;
         const rect = progressTrack.getBoundingClientRect();
         const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-        const track = TRACKS[currentIndex];
-        const previewLen = track.previewSeconds || CONFIG.defaultPreviewSeconds;
-        audioEl.currentTime = ratio * previewLen;
+        audioEl.currentTime = ratio * audioEl.duration;
       });
     }
   }
@@ -584,31 +622,37 @@
     isPlaying ? pause() : play();
   }
 
-  audioEl.addEventListener("timeupdate", () => {
-    if (currentIndex < 0) return;
-    const track = TRACKS[currentIndex];
-    const previewLen = track.previewSeconds || CONFIG.defaultPreviewSeconds;
-
-    if (audioEl.currentTime >= previewLen) {
-      audioEl.pause();
-      audioEl.currentTime = 0;
-      isPlaying = false;
-      render();
-      return;
+  function playNextAuto() {
+    if (!TRACKS.length) return;
+    let nextIndex;
+    if (playMode === "shuffle") {
+      if (TRACKS.length === 1) {
+        nextIndex = 0;
+      } else {
+        do {
+          nextIndex = Math.floor(Math.random() * TRACKS.length);
+        } while (nextIndex === currentIndex);
+      }
+    } else {
+      nextIndex = (currentIndex + 1) % TRACKS.length; // vuelve al inicio = bucle infinito
     }
+    loadTrack(nextIndex);
+    play();
+  }
 
+  audioEl.addEventListener("timeupdate", () => {
+    if (currentIndex < 0 || !isFinite(audioEl.duration)) return;
     const fill = document.getElementById("mp-progress-fill");
     const curEl = document.getElementById("mp-time-current");
     const totEl = document.getElementById("mp-time-total");
-    if (fill) fill.style.width = `${(audioEl.currentTime / previewLen) * 100}%`;
+    if (fill) fill.style.width = `${(audioEl.currentTime / audioEl.duration) * 100}%`;
     if (curEl) curEl.textContent = fmtTime(audioEl.currentTime);
-    if (totEl) totEl.textContent = fmtTime(previewLen);
+    if (totEl) totEl.textContent = fmtTime(audioEl.duration);
   });
 
-  audioEl.addEventListener("ended", () => {
-    isPlaying = false;
-    render();
-  });
+  // Al terminar una canción, pasa automáticamente a la siguiente — para
+  // siempre, en bucle infinito (consecutivo o aleatorio según el modo).
+  audioEl.addEventListener("ended", playNextAuto);
 
   render();
 })();
