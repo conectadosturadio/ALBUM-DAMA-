@@ -1,0 +1,615 @@
+<!--
+  ===========================================================================
+  REPRODUCTOR DE MÚSICA CON VISTA PREVIA — para pegar en Blogger
+  ===========================================================================
+  CÓMO USARLO:
+  1. Baja hasta la sección "CONFIG" (unas líneas más abajo) y cambia:
+     - logoUrl / brandName: tu logo o nombre.
+     - playlistName / playlistDescription: el título y descripción grandes.
+     - coverImage: la imagen grande de fondo (como la de Amazon Music).
+  2. Baja hasta "TRACKS" y reemplaza cada canción con las tuyas:
+     - title, artist, album: texto.
+     - cover: URL de la imagen cuadrada de esa canción.
+     - audio: URL directa del archivo MP3 (puede ser el trozo/preview,
+       o la canción completa — el reproductor la corta igual).
+     - previewSeconds: cuántos segundos se dejan escuchar antes de parar
+       automáticamente (ej: 30). Si no lo pones, usa el valor general.
+     - buyUrl: (opcional) link de compra/descarga. Si lo dejas vacío,
+       no aparece botón de compra en esa canción.
+  3. Copia TODO este archivo y pégalo en Blogger: al editar una entrada,
+     cambia la vista a "HTML" y pega aquí.
+  4. Sube tus archivos MP3 e imágenes a algún lugar con enlace público
+     (Google Drive, Dropbox, tu propio hosting, etc.) y usa esos enlaces
+     directos en "audio" y "cover".
+  ===========================================================================
+-->
+<div id="mp-app-root"></div>
+
+<style>
+  #mp-app-root, #mp-app-root * { box-sizing: border-box; }
+  #mp-app-root {
+    --mp-bg: #1B1420;
+    --mp-surface: #241B2B;
+    --mp-surface-hover: #2E2233;
+    --mp-accent: #E8A33D;
+    --mp-accent-dim: #6b5324;
+    --mp-text: #F5EFE6;
+    --mp-text-soft: #B7A9BC;
+    --mp-border: #362A3E;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--mp-bg);
+    color: var(--mp-text);
+    border-radius: 18px;
+    overflow: hidden;
+    max-width: 640px;
+    margin: 0 auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  }
+
+  #mp-app-root .mp-hero {
+    position: relative;
+    padding: 28px 24px 20px;
+    background-size: cover;
+    background-position: center;
+  }
+  #mp-app-root .mp-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(27,20,32,0.55) 0%, rgba(27,20,32,0.88) 65%, var(--mp-bg) 100%);
+  }
+  #mp-app-root .mp-hero-content { position: relative; z-index: 1; }
+
+  #mp-app-root .mp-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 22px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    color: var(--mp-text-soft);
+  }
+  #mp-app-root .mp-brand img {
+    height: 22px;
+    width: 22px;
+    border-radius: 5px;
+    object-fit: cover;
+  }
+
+  #mp-app-root .mp-hero-body {
+    display: flex;
+    gap: 18px;
+    align-items: flex-end;
+  }
+  #mp-app-root .mp-hero-cover {
+    width: 108px;
+    height: 108px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.45);
+    background: linear-gradient(135deg, var(--mp-accent-dim), var(--mp-surface));
+  }
+  #mp-app-root .mp-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--mp-accent);
+    margin-bottom: 4px;
+  }
+  #mp-app-root .mp-title {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 30px;
+    line-height: 1.1;
+    margin: 0 0 6px;
+    font-weight: 700;
+  }
+  #mp-app-root .mp-desc {
+    font-size: 13.5px;
+    color: var(--mp-text-soft);
+    margin: 0 0 4px;
+    max-width: 40ch;
+  }
+  #mp-app-root .mp-meta {
+    font-size: 12px;
+    color: var(--mp-text-soft);
+    opacity: 0.8;
+  }
+
+  #mp-app-root .mp-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+    position: relative;
+    z-index: 1;
+  }
+  #mp-app-root .mp-play-all {
+    background: var(--mp-accent);
+    color: #241505;
+    border: none;
+    border-radius: 999px;
+    padding: 10px 22px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  #mp-app-root .mp-play-all:hover { filter: brightness(1.06); }
+
+  #mp-app-root .mp-albums {
+    display: flex;
+    gap: 8px;
+    padding: 14px 24px 4px;
+    overflow-x: auto;
+  }
+  #mp-app-root .mp-album-chip {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--mp-border);
+    background: transparent;
+    color: var(--mp-text-soft);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #mp-app-root .mp-album-chip.active {
+    background: var(--mp-text);
+    color: var(--mp-bg);
+    border-color: var(--mp-text);
+  }
+
+  #mp-app-root .mp-list { padding: 8px 12px 90px; }
+
+  #mp-app-root .mp-track {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+  #mp-app-root .mp-track:hover { background: var(--mp-surface-hover); }
+  #mp-app-root .mp-track.playing { background: var(--mp-surface); }
+
+  #mp-app-root .mp-track-index {
+    width: 20px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--mp-text-soft);
+    flex-shrink: 0;
+  }
+  #mp-app-root .mp-track.playing .mp-track-index { color: var(--mp-accent); }
+
+  #mp-app-root .mp-track-cover {
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--mp-accent-dim), var(--mp-surface));
+  }
+  #mp-app-root .mp-track-info { min-width: 0; flex: 1; }
+  #mp-app-root .mp-track-title {
+    font-size: 14.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #mp-app-root .mp-track.playing .mp-track-title { color: var(--mp-accent); }
+  #mp-app-root .mp-track-artist {
+    font-size: 12.5px;
+    color: var(--mp-text-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #mp-app-root .mp-track-buy {
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--mp-accent);
+    text-decoration: none;
+    border: 1px solid var(--mp-accent-dim);
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  #mp-app-root .mp-track-buy:hover { background: rgba(232,163,61,0.12); }
+
+  #mp-app-root .mp-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--mp-text-soft);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  #mp-app-root .mp-icon-btn:hover { color: var(--mp-text); background: rgba(255,255,255,0.06); }
+
+  /* Mini player fijo abajo */
+  #mp-app-root .mp-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #100C13;
+    border-top: 1px solid var(--mp-border);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  #mp-app-root .mp-bar-cover {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--mp-accent-dim), var(--mp-surface));
+  }
+  #mp-app-root .mp-bar-info { min-width: 0; width: 120px; flex-shrink: 0; }
+  #mp-app-root .mp-bar-title {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #mp-app-root .mp-bar-artist {
+    font-size: 11.5px;
+    color: var(--mp-text-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #mp-app-root .mp-bar-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  #mp-app-root .mp-bar-play {
+    background: var(--mp-text);
+    color: var(--mp-bg);
+    border: none;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  #mp-app-root .mp-progress-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 60px;
+  }
+  #mp-app-root .mp-progress-time {
+    font-size: 10.5px;
+    color: var(--mp-text-soft);
+    width: 30px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+  #mp-app-root .mp-progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--mp-border);
+    border-radius: 999px;
+    position: relative;
+    cursor: pointer;
+  }
+  #mp-app-root .mp-progress-fill {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    background: var(--mp-accent);
+    border-radius: 999px;
+    width: 0%;
+  }
+  #mp-app-root .mp-preview-tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--mp-accent);
+    border: 1px solid var(--mp-accent-dim);
+    padding: 2px 7px;
+    border-radius: 999px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 420px) {
+    #mp-app-root .mp-bar-info { width: 70px; }
+    #mp-app-root .mp-title { font-size: 24px; }
+    #mp-app-root .mp-hero-cover { width: 84px; height: 84px; }
+  }
+</style>
+
+<script>
+(function () {
+
+  /* =========================================================================
+     CONFIG — edita esto con tus datos
+  ========================================================================= */
+  const CONFIG = {
+    logoUrl: "",                      // URL de tu logo pequeño (opcional)
+    brandName: "Mi Música",           // nombre que aparece junto al logo
+    playlistName: "Mis Canciones",    // título grande
+    playlistDescription: "Escucha la vista previa y descubre mis temas.",
+    coverImage: "https://github.com/conectadosturadio/ALBUM-DAMA-/blob/main/PORTADA%20ALBUM.png?raw=true",
+    accentColor: "#E8A33D",           // color de acento (botones, progreso)
+    defaultPreviewSeconds: 60         // duración de la vista previa por defecto
+  };
+
+  /* =========================================================================
+     TRACKS — reemplaza con tus canciones
+     Cada canción admite:
+       title, artist, album, cover, audio, previewSeconds (opcional), buyUrl (opcional)
+  ========================================================================= */
+  // Deja "cover" vacío en cada canción: como usarás UNA sola imagen para
+  // todo, el reproductor toma automáticamente la de CONFIG.coverImage.
+  const TRACKS = [
+    {
+      title: "Amigos De Verdad",
+      artist: "Tu nombre de artista",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/AMIGOS%20DE%20VERDAD.mp3",
+      previewSeconds: 60,
+      buyUrl: ""
+    },
+    {
+      title: "Barranquilla Que Sabor",
+      artist: "Tu nombre de artista",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/BARRANQUILLA%20QUE%20SABOR.mp3",
+      previewSeconds: 60,
+      buyUrl: ""
+    },
+    {
+      title: "Guacharaca Llámame",
+      artist: "Tu nombre de artista",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/GUACHARACA%20LLAMAME.mp3",
+      previewSeconds: 60,
+      buyUrl: ""
+    },
+    {
+      title: "Oh Sufrir",
+      artist: "Tu nombre de artista",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/OH%20SUFRIR.mp3",
+      previewSeconds: 60,
+      buyUrl: ""
+    },
+    {
+      title: "Qué Bonito Es Regresar",
+      artist: "Tu nombre de artista",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/QUE%20BONITO%20ES%20REGRESAR.mp3",
+      previewSeconds: 60,
+      buyUrl: ""
+    },
+    {
+      title: "Quiero Volver",
+      artist: "Tu nombre de artista",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/QUIERO%20VOLVER.mp3",
+      previewSeconds: 60,
+      buyUrl: ""
+    }
+  ];
+
+  /* =========================================================================
+     A partir de aquí es el motor del reproductor — no hace falta tocarlo.
+  ========================================================================= */
+  const root = document.getElementById("mp-app-root");
+  root.style.setProperty("--mp-accent", CONFIG.accentColor);
+
+  const albums = ["Todos", ...Array.from(new Set(TRACKS.map(t => t.album).filter(Boolean)))];
+  let activeAlbum = "Todos";
+  let currentIndex = -1;
+  let isPlaying = false;
+  const audioEl = new Audio();
+
+  function fmtTime(s) {
+    if (!isFinite(s) || s < 0) s = 0;
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60).toString().padStart(2, "0");
+    return `${m}:${sec}`;
+  }
+
+  function visibleTracks() {
+    return TRACKS
+      .map((t, i) => ({ ...t, _i: i }))
+      .filter(t => activeAlbum === "Todos" || t.album === activeAlbum);
+  }
+
+  function coverStyle(url) {
+    return url ? `background-image:url('${url}')` : "";
+  }
+
+  function render() {
+    const tracks = visibleTracks();
+    root.innerHTML = `
+      <div class="mp-hero" style="${coverStyle(CONFIG.coverImage)}">
+        <div class="mp-hero-content">
+          <div class="mp-brand">
+            ${CONFIG.logoUrl ? `<img src="${CONFIG.logoUrl}" alt="logo">` : ""}
+            <span>${CONFIG.brandName}</span>
+          </div>
+          <div class="mp-hero-body">
+            <div class="mp-hero-cover" style="${coverStyle(CONFIG.coverImage)}; background-size:cover; background-position:center;"></div>
+            <div>
+              <div class="mp-eyebrow">Playlist</div>
+              <h2 class="mp-title">${CONFIG.playlistName}</h2>
+              <p class="mp-desc">${CONFIG.playlistDescription}</p>
+              <p class="mp-meta">${TRACKS.length} canciones</p>
+            </div>
+          </div>
+          <div class="mp-actions">
+            <button class="mp-play-all" id="mp-play-all">▶ Reproducir</button>
+          </div>
+        </div>
+      </div>
+
+      ${albums.length > 1 ? `
+      <div class="mp-albums">
+        ${albums.map(a => `<button class="mp-album-chip ${a === activeAlbum ? "active" : ""}" data-album="${a}">${a}</button>`).join("")}
+      </div>` : ""}
+
+      <div class="mp-list">
+        ${tracks.map((t, pos) => `
+          <div class="mp-track ${t._i === currentIndex ? "playing" : ""}" data-index="${t._i}">
+            <div class="mp-track-index">${t._i === currentIndex && isPlaying ? "♪" : pos + 1}</div>
+            <div class="mp-track-cover" style="${coverStyle(t.cover || CONFIG.coverImage)}; background-size:cover; background-position:center;"></div>
+            <div class="mp-track-info">
+              <div class="mp-track-title">${t.title}</div>
+              <div class="mp-track-artist">${t.artist}</div>
+            </div>
+            ${t.buyUrl ? `<a class="mp-track-buy" href="${t.buyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Comprar</a>` : ""}
+          </div>
+        `).join("")}
+      </div>
+
+      <div class="mp-bar">
+        <div class="mp-bar-cover" id="mp-bar-cover" style="${currentIndex >= 0 ? coverStyle(TRACKS[currentIndex].cover || CONFIG.coverImage) + ';background-size:cover;background-position:center;' : ''}"></div>
+        <div class="mp-bar-info">
+          <div class="mp-bar-title" id="mp-bar-title">${currentIndex >= 0 ? TRACKS[currentIndex].title : "Selecciona una canción"}</div>
+          <div class="mp-bar-artist" id="mp-bar-artist">${currentIndex >= 0 ? TRACKS[currentIndex].artist : ""}</div>
+        </div>
+        <button class="mp-bar-play" id="mp-bar-play">${isPlaying ? "❚❚" : "▶"}</button>
+        <div class="mp-progress-wrap">
+          <span class="mp-progress-time" id="mp-time-current">0:00</span>
+          <div class="mp-progress-track" id="mp-progress-track">
+            <div class="mp-progress-fill" id="mp-progress-fill"></div>
+          </div>
+          <span class="mp-progress-time" id="mp-time-total">0:00</span>
+        </div>
+        <span class="mp-preview-tag">Vista previa</span>
+      </div>
+    `;
+
+    attachEvents();
+  }
+
+  function attachEvents() {
+    root.querySelectorAll(".mp-album-chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeAlbum = btn.dataset.album;
+        render();
+      });
+    });
+
+    root.querySelectorAll(".mp-track").forEach(row => {
+      row.addEventListener("click", () => {
+        const i = parseInt(row.dataset.index, 10);
+        if (i === currentIndex) {
+          togglePlay();
+        } else {
+          loadTrack(i);
+          play();
+        }
+      });
+    });
+
+    const playAllBtn = root.querySelector("#mp-play-all");
+    if (playAllBtn) {
+      playAllBtn.addEventListener("click", () => {
+        const tracks = visibleTracks();
+        if (!tracks.length) return;
+        loadTrack(tracks[0]._i);
+        play();
+      });
+    }
+
+    const barPlay = root.querySelector("#mp-bar-play");
+    if (barPlay) barPlay.addEventListener("click", togglePlay);
+
+    const progressTrack = root.querySelector("#mp-progress-track");
+    if (progressTrack) {
+      progressTrack.addEventListener("click", (e) => {
+        if (currentIndex < 0) return;
+        const rect = progressTrack.getBoundingClientRect();
+        const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+        const track = TRACKS[currentIndex];
+        const previewLen = track.previewSeconds || CONFIG.defaultPreviewSeconds;
+        audioEl.currentTime = ratio * previewLen;
+      });
+    }
+  }
+
+  function loadTrack(i) {
+    currentIndex = i;
+    const track = TRACKS[i];
+    audioEl.src = track.audio || "";
+    audioEl.currentTime = 0;
+  }
+
+  function play() {
+    if (currentIndex < 0 || !TRACKS[currentIndex].audio) return;
+    audioEl.play().catch(() => {});
+    isPlaying = true;
+    render();
+  }
+
+  function pause() {
+    audioEl.pause();
+    isPlaying = false;
+    render();
+  }
+
+  function togglePlay() {
+    if (currentIndex < 0) return;
+    isPlaying ? pause() : play();
+  }
+
+  audioEl.addEventListener("timeupdate", () => {
+    if (currentIndex < 0) return;
+    const track = TRACKS[currentIndex];
+    const previewLen = track.previewSeconds || CONFIG.defaultPreviewSeconds;
+
+    if (audioEl.currentTime >= previewLen) {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+      isPlaying = false;
+      render();
+      return;
+    }
+
+    const fill = document.getElementById("mp-progress-fill");
+    const curEl = document.getElementById("mp-time-current");
+    const totEl = document.getElementById("mp-time-total");
+    if (fill) fill.style.width = `${(audioEl.currentTime / previewLen) * 100}%`;
+    if (curEl) curEl.textContent = fmtTime(audioEl.currentTime);
+    if (totEl) totEl.textContent = fmtTime(previewLen);
+  });
+
+  audioEl.addEventListener("ended", () => {
+    isPlaying = false;
+    render();
+  });
+
+  render();
+})();
+</script>
