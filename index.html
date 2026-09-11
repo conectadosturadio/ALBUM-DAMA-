@@ -3,10 +3,9 @@
   REPRODUCTOR DE MÚSICA — para pegar en Blogger
   ===========================================================================
   CÓMO USARLO:
-  1. Baja hasta "CONFIG" y cambia logo, título, descripción, portada y
-     el número de WhatsApp para el botón "Pídelo aquí".
-  2. Baja hasta "TRACKS" y ya están cargadas tus 6 canciones con los links
-     de GitHub. Solo cambia "artist" por tu nombre o el de tu proyecto.
+  1. Baja hasta "CONFIG" y cambia logo, título, descripción, portada,
+     el número de WhatsApp, el precio, y los segundos de vista previa.
+  2. Baja hasta "TRACKS" y ya están tus 6 canciones cargadas.
   3. Copia TODO este archivo y pégalo en Blogger, en una entrada, en modo
      HTML (los tres puntos del editor → HTML view).
   ===========================================================================
@@ -15,7 +14,7 @@
 
 <a id="mp-wa-button" href="https://wa.me/50765489138" target="_blank" rel="noopener">
   <span class="mp-wa-icon">
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
       <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
       <path d="M12.004 2C6.486 2 2.01 6.477 2.01 12c0 1.86.507 3.632 1.464 5.19L2 22l4.94-1.446A9.958 9.958 0 0 0 12.004 22C17.522 22 22 17.523 22 12S17.522 2 12.004 2zm0 18.156a8.13 8.13 0 0 1-4.147-1.14l-.298-.176-3.024.885.9-2.95-.194-.303a8.104 8.104 0 0 1-1.246-4.32c0-4.49 3.653-8.142 8.147-8.142 4.494 0 8.147 3.652 8.147 8.142 0 4.49-3.653 8.148-8.147 8.148z"/>
     </svg>
@@ -236,12 +235,9 @@
 
   #mp-app-root .mp-track-price {
     flex-shrink: 0;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 700;
     color: var(--mp-accent);
-    border: 1px solid var(--mp-accent-dim);
-    padding: 5px 12px;
-    border-radius: 999px;
     white-space: nowrap;
   }
 
@@ -349,8 +345,8 @@
     #mp-app-root .mp-hero-cover { width: 84px; height: 84px; }
   }
 
-  /* Botón flotante de WhatsApp — reubicado arriba a la derecha
-     para que nunca tape la barra del reproductor (que va abajo) */
+  /* Botón flotante de WhatsApp — arriba a la derecha, para no tapar
+     el reproductor que va pegado abajo */
   #mp-wa-button {
     position: fixed;
     right: 16px;
@@ -358,7 +354,7 @@
     z-index: 999999;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     background: #25D366;
     color: #ffffff;
     text-decoration: none;
@@ -369,11 +365,9 @@
     border-radius: 999px;
     box-shadow: 0 8px 22px rgba(0,0,0,0.35);
     animation: mp-wa-pulse 2.2s ease-in-out infinite;
-    max-width: calc(100vw - 32px);
   }
   #mp-wa-button:hover { filter: brightness(1.05); }
   #mp-wa-button .mp-wa-icon { display: flex; flex-shrink: 0; }
-  #mp-wa-button .mp-wa-icon svg { width: 20px; height: 20px; }
   #mp-wa-button .mp-wa-text { white-space: nowrap; }
 
   @keyframes mp-wa-pulse {
@@ -382,16 +376,9 @@
     100% { box-shadow: 0 8px 22px rgba(0,0,0,0.35), 0 0 0 0 rgba(37,211,102,0); }
   }
 
-  /* En móvil se achica el botón pero el texto "Pídelo aquí" se conserva visible */
   @media (max-width: 420px) {
-    #mp-wa-button {
-      font-size: 11.5px;
-      padding: 8px 12px 8px 10px;
-      gap: 5px;
-      right: 10px;
-      top: 10px;
-    }
-    #mp-wa-button .mp-wa-icon svg { width: 17px; height: 17px; }
+    /* En móvil se conserva el texto "Pídelo aquí", solo se compacta */
+    #mp-wa-button { font-size: 12px; padding: 9px 13px 9px 10px; gap: 6px; }
   }
 </style>
 
@@ -409,12 +396,12 @@
     coverImage: "https://github.com/conectadosturadio/ALBUM-DAMA-/blob/main/PORTADA%20ALBUM.png?raw=true",
     accentColor: "#E8A33D",
     whatsappNumber: "50765489138", // número con código de país, sin + ni espacios
-    trackDurationLimit: 90, // límite de reproducción por canción, en segundos (90 = 1:30). Pon null para quitar el límite.
-    trackPrice: "$0.99" // precio que se muestra en cada canción
+    previewSeconds: 60,            // vista previa: 60 = 1 minuto, igual para todas
+    price: "$0.99"                 // precio que se muestra en cada canción
   };
 
   /* =========================================================================
-     TRACKS — tus canciones (se reproducen hasta el límite de arriba)
+     TRACKS — tus canciones
   ========================================================================= */
   const TRACKS = [
     {
@@ -464,6 +451,38 @@
       cover: "",
       audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/QUIERO%20VOLVER.mp3",
       buyUrl: ""
+    },
+    {
+      title: "Domingo",
+      artist: "Máster Dj Hanz",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/DOMINGO.mp3",
+      buyUrl: ""
+    },
+    {
+      title: "Aurorita Tiene Sabor",
+      artist: "Máster Dj Hanz",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/AURORITA%20TIENE%20SABOR.mp3",
+      buyUrl: ""
+    },
+    {
+      title: "Se Prendió La Fiesta",
+      artist: "Máster Dj Hanz",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/SE%20PRENDIO%20LA%20FIESTA.mp3",
+      buyUrl: ""
+    },
+    {
+      title: "Me Fui Sin Mirar Atrás",
+      artist: "Máster Dj Hanz",
+      album: "Álbum",
+      cover: "",
+      audio: "https://github.com/conectadosturadio/ALBUM-DAMA-/raw/refs/heads/main/ME%20FUI%20SIN%20MIRAR%20ATRAS.mp3",
+      buyUrl: ""
     }
   ];
 
@@ -481,23 +500,14 @@
   let currentIndex = -1;
   let isPlaying = false;
   let playMode = "sequential"; // "sequential" | "shuffle"
-  let advancing = false; // evita que el corte de duración dispare el avance dos veces
   const audioEl = new Audio();
+  const PREVIEW_SECONDS = CONFIG.previewSeconds || 60;
 
   function fmtTime(s) {
     if (!isFinite(s) || s < 0) s = 0;
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60).toString().padStart(2, "0");
     return `${m}:${sec}`;
-  }
-
-  // Duración "visible" de una pista: el límite configurado, o la duración
-  // real si la canción dura menos que el límite (o si no hay límite).
-  function effectiveDuration() {
-    const real = audioEl.duration;
-    if (!isFinite(real)) return CONFIG.trackDurationLimit || 0;
-    if (!CONFIG.trackDurationLimit) return real;
-    return Math.min(real, CONFIG.trackDurationLimit);
   }
 
   function visibleTracks() {
@@ -552,7 +562,8 @@
               <div class="mp-track-title">${t.title}</div>
               <div class="mp-track-artist">${t.artist}</div>
             </div>
-            ${t.buyUrl ? `<a class="mp-track-buy" href="${t.buyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Comprar</a>` : `<span class="mp-track-price">${CONFIG.trackPrice}</span>`}
+            <span class="mp-track-price">${CONFIG.price}</span>
+            ${t.buyUrl ? `<a class="mp-track-buy" href="${t.buyUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Comprar</a>` : ""}
           </div>
         `).join("")}
       </div>
@@ -624,18 +635,15 @@
     if (progressTrack) {
       progressTrack.addEventListener("click", (e) => {
         if (currentIndex < 0) return;
-        const dur = effectiveDuration();
-        if (!isFinite(dur) || dur <= 0) return;
         const rect = progressTrack.getBoundingClientRect();
         const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-        audioEl.currentTime = ratio * dur;
+        audioEl.currentTime = ratio * PREVIEW_SECONDS;
       });
     }
   }
 
   function loadTrack(i) {
     currentIndex = i;
-    advancing = false;
     const track = TRACKS[i];
     audioEl.src = track.audio || "";
     audioEl.currentTime = 0;
@@ -677,32 +685,26 @@
     play();
   }
 
+  // Corta cada canción a los PREVIEW_SECONDS (1 minuto) y pasa sola a la
+  // siguiente — igual para todas las canciones, en bucle infinito.
   audioEl.addEventListener("timeupdate", () => {
     if (currentIndex < 0) return;
 
-    // Corte de duración: si hay un límite configurado y ya se alcanzó,
-    // pasa a la siguiente canción como si hubiera terminado.
-    if (CONFIG.trackDurationLimit && audioEl.currentTime >= CONFIG.trackDurationLimit && !advancing) {
-      advancing = true;
+    if (audioEl.currentTime >= PREVIEW_SECONDS) {
       playNextAuto();
       return;
     }
 
-    const dur = effectiveDuration();
     const fill = document.getElementById("mp-progress-fill");
     const curEl = document.getElementById("mp-time-current");
     const totEl = document.getElementById("mp-time-total");
-    if (fill && dur > 0) fill.style.width = `${Math.min((audioEl.currentTime / dur) * 100, 100)}%`;
+    if (fill) fill.style.width = `${(audioEl.currentTime / PREVIEW_SECONDS) * 100}%`;
     if (curEl) curEl.textContent = fmtTime(audioEl.currentTime);
-    if (totEl) totEl.textContent = fmtTime(dur);
+    if (totEl) totEl.textContent = fmtTime(PREVIEW_SECONDS);
   });
 
-  // Si la canción termina antes de llegar al límite (o no hay límite),
-  // pasa automáticamente a la siguiente — para siempre, en bucle infinito.
-  audioEl.addEventListener("ended", () => {
-    if (advancing) return; // ya se manejó por el corte de duración
-    playNextAuto();
-  });
+  // Por si una canción dura menos que PREVIEW_SECONDS y termina sola antes.
+  audioEl.addEventListener("ended", playNextAuto);
 
   render();
 })();
